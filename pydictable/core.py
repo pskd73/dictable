@@ -30,7 +30,7 @@ _IGNORE_TYPES = [ConfigDict]
 
 
 class DictAble(_BaseDictAble):
-    _config: ConfigDict = ConfigDict(_default=True)
+    _config: ConfigDict = ConfigDict()
 
     def __init__(self, *args, **kwargs):
         super(DictAble, self).__init__(*args, **kwargs)

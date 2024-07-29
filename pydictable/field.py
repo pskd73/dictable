@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import EnumMeta, Enum
 from typing import Type, List, Any
 
+from pydictable.config import merge_configs
 from pydictable.type import Field, _BaseDictAble, DefaultFactoryType
 
 
@@ -95,8 +96,7 @@ class ObjectField(Field):
         self.obj_type = obj_type
 
     def from_dict(self, v, config=None):
-        if self.obj_type._config.default:
-            self.obj_type._config = config
+        self.obj_type._config = merge_configs(config, self.obj_type._config)
         return self.obj_type(dict=v)
 
     def to_dict(self, v, skip_optional: bool = False):
