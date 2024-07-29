@@ -16,8 +16,12 @@ class DataValidationError(Exception):
 
 
 class StrField(Field):
-    def from_dict(self, v: str):
-        return v
+    def from_dict(self, v: str, config=None):
+        value = v
+        if config:
+            if config.str_strip_whitespace:
+                value = value.strip()
+        return value
 
     def to_dict(self, v, skip_optional: bool = False):
         return v
@@ -30,7 +34,7 @@ class StrField(Field):
 
 
 class BoolField(Field):
-    def from_dict(self, v: bool):
+    def from_dict(self, v: bool, config=None):
         return v
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -44,7 +48,7 @@ class BoolField(Field):
 
 
 class IntField(Field):
-    def from_dict(self, v: int):
+    def from_dict(self, v: int, config=None):
         return v
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -58,7 +62,7 @@ class IntField(Field):
 
 
 class FloatField(Field):
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
         return v
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -72,7 +76,7 @@ class FloatField(Field):
 
 
 class DatetimeField(Field):
-    def from_dict(self, v: int):
+    def from_dict(self, v: int, config=None):
         return datetime.fromtimestamp(v / 1000)
 
     def to_dict(self, v: datetime, skip_optional: bool = False):
@@ -90,7 +94,9 @@ class ObjectField(Field):
         super(ObjectField, self).__init__(required=required)
         self.obj_type = obj_type
 
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
+        if self.obj_type._config.default:
+            self.obj_type._config = config
         return self.obj_type(dict=v)
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -113,8 +119,8 @@ class ListField(Field):
         super(ListField, self).__init__(*args, **kwargs)
         self.obj_type = obj_type
 
-    def from_dict(self, v):
-        return [self.obj_type.from_dict(e) for e in v]
+    def from_dict(self, v, config=None):
+        return [self.obj_type.from_dict(e, config) for e in v]
 
     def to_dict(self, v, skip_optional: bool = False):
         return [self.obj_type.to_dict(e, skip_optional) for e in v]
@@ -145,7 +151,7 @@ class CustomField(Field, ABC):
         self._from_json = from_json
         self._to_json = to_json
 
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
         return self._from_json(v)
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -176,7 +182,7 @@ class EnumField(Field):
         self.enum = enum
         self.is_name = is_name
 
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
         return self.enum[v] if self.is_name else self.enum(v)
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -206,7 +212,7 @@ class DictValueField(Field):
         self.value_type = value_type
         super(DictValueField, self).__init__(required, key)
 
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
         return {key: self.value_type(dict=val) for key, val in v.items()}
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -227,11 +233,11 @@ class UnionField(Field):
         super(UnionField, self).__init__(*args, **kwargs)
         self.fields = fields
 
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
         for field in self.fields:
             try:
                 field.validate_dict('', v)
-                return field.from_dict(v)
+                return field.from_dict(v, config)   # Todo: ObjectField?
             except (AssertionError, DataValidationError):
                 pass
         raise NotImplementedError()
@@ -268,7 +274,7 @@ class UnionField(Field):
 
 
 class NoneField(Field):
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
         return None
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -282,7 +288,7 @@ class NoneField(Field):
 
 
 class AnyField(Field):
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
         return v
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -309,8 +315,8 @@ class DictField(Field):
         self.key_type = key_type
         self.value_type = value_type
 
-    def from_dict(self, value):
-        return {self.key_type.from_dict(k): self.value_type.from_dict(v) for k, v in value.items()}
+    def from_dict(self, v, config=None):
+        return {self.key_type.from_dict(k, config): self.value_type.from_dict(v, config) for k, v in v.items()}
 
     def to_dict(self, value, skip_optional: bool = False):
         return {self.key_type.to_dict(k, skip_optional): self.value_type.to_dict(v, skip_optional)
@@ -351,7 +357,7 @@ class RegexField(Field):
         super(RegexField, self).__init__(*args, **kwargs)
         self.regex_string = regex_string
 
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
         return v
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -374,7 +380,7 @@ class RangeIntField(Field):
         self.min_val = min_val
         self.max_val = max_val
 
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
         return v
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -398,7 +404,7 @@ class RangeFloatField(Field):
         self.min_val = min_val
         self.max_val = max_val
 
-    def from_dict(self, v):
+    def from_dict(self, v, config=None):
         return v
 
     def to_dict(self, v, skip_optional: bool = False):

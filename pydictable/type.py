@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from typing import Any, Callable, Tuple
 
+from pydictable.config import ConfigDict
+
 DefaultFactoryType = Tuple[Callable, Tuple[Any], dict]
 
 
@@ -18,7 +20,7 @@ class Field:
         self.default_factory = default_factory
 
     @abstractmethod
-    def from_dict(self, v):
+    def from_dict(self, v, config: ConfigDict = None):
         pass
 
     @abstractmethod
