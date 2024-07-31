@@ -238,7 +238,7 @@ class UnionField(Field):
         for field in self.fields:
             try:
                 field.validate_dict('', v)
-                return field.from_dict(v, config)   # Todo: ObjectField?
+                return field.from_dict(v, config)
             except (AssertionError, DataValidationError):
                 pass
         raise NotImplementedError()

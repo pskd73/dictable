@@ -1305,3 +1305,66 @@ class TestCore(TestCase):
                 'key two': ' value2'
             },
         })
+
+    def test_custom_string_field_for_strip(self):
+        class CustomStringField(StrField):
+            def from_dict(self, v: str, config=None):
+                v = super().from_dict(v, config)
+                return v.split('-')[0]
+
+        class Item(DictAble):
+            _config = ConfigDict(
+                str_strip_whitespace=True
+            )
+            first_tag = CustomStringField(required=True)
+
+        item = Item(dict={'first_tag': ' FOO-BAR-TEST '})
+        self.assertEqual(item.to_dict(), {'first_tag': 'FOO'})
+
+    def test_test_custom_config_with_union_field(self):
+        class Relative(DictAble):
+            name: str = StrField(required=True)
+            relation: str = StrField(required=True)
+
+        class Friend(DictAble):
+            name: str = StrField(required=True)
+            known_since: int = IntField(required=True)
+
+        class Parent(DictAble):
+            _config = ConfigDict(str_strip_whitespace=False)
+            name: str = StrField(required=True)
+            age: int = IntField(required=True)
+
+        class Person(DictAble):
+            _config = ConfigDict(str_strip_whitespace=True)
+            name: str = StrField(required=True)
+            connections = ListField(
+                UnionField([ObjectField(Relative), ObjectField(Friend), ObjectField(Parent)], required=True),
+                required=True)
+
+        p1 = Person(dict={
+            'name': ' Bhargav ',
+            'connections': [
+                {
+                    'name': '  Suresh  ',
+                    'known_since': 2014
+                },
+                {
+                    'name': ' Umesh ',
+                    'age': 60
+                }
+            ]
+        })
+        self.assertEqual(p1.to_dict(), {
+            'name': 'Bhargav',
+            'connections': [
+                {
+                    'name': 'Suresh',
+                    'known_since': 2014
+                },
+                {
+                    'name': ' Umesh ',
+                    'age': 60
+                }
+            ]
+        })
