@@ -3,7 +3,7 @@ class ConfigDict:
         self.str_strip_whitespace = str_strip_whitespace
 
 
-def merge_configs(conf1, conf2) -> ConfigDict:
+def merge_configs(conf1: ConfigDict, conf2: ConfigDict) -> ConfigDict:
     config_values = {}
     for config in (conf1, conf2):
         for attr in vars(config):

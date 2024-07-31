@@ -96,7 +96,8 @@ class ObjectField(Field):
         self.obj_type = obj_type
 
     def from_dict(self, v, config=None):
-        self.obj_type._config = merge_configs(config, self.obj_type._config)
+        if config is not None:
+            self.obj_type._config = merge_configs(config, self.obj_type._config)
         return self.obj_type(dict=v)
 
     def to_dict(self, v, skip_optional: bool = False):
